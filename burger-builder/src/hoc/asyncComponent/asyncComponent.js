@@ -1,24 +1,20 @@
 // replaced by React.lazy() left here for reference
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 
 // Lazy loading wrapper
 const asyncComponent = (importComponent) => {
-  return class extends Component {
-    state = {
-      component: null,
-    };
+  return (props) => {
+    const [component, setComponent] = useState(null);
 
-    componentDidMount() {
+    useEffect(() => {
       importComponent().then((cmp) => {
-        this.setState({ component: cmp.default });
+        setComponent(cmp.default);
       });
-    }
+    }, []);
 
-    render() {
-      const C = this.state.component;
+    const C = component;
 
-      return C ? <C {...this.props} /> : null;
-    }
+    return C ? <C {...props} /> : null;
   };
 };
 

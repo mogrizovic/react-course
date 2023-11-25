@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import Aux from "../../hoc/Aux/Aux";
 import Burger from "../../components/Burger/Burger";
 import BuildControls from "../../components/Burger/BuildControls/BuildControls";
@@ -7,19 +7,19 @@ import OrderSummary from "../../components/Burger/OrderSummary/OrderSummary";
 import Spinner from "../../components/UI/Spinner/Spinner";
 import withErrorHandler from "../../hoc/withErrorHandler/withErrorHandler";
 import { connect } from "react-redux";
-import * as actions from "../../Store/actions/index";
+import * as actions from "../../store/actions/index";
 import axios from "../../axios-orders";
 
-export class BurgerBuilder extends Component {
-  state = {
-    ordering: false,
-  };
+const BurgerBuilder = (props) => {
+  const [isOrdering, setIsOrdering] = useState(false);
 
-  componentDidMount() {
-    this.props.onInitIngredients();
-  }
+  const { onInitIngredients } = props;
 
-  updatePurchasable = (newIngredients) => {
+  useEffect(() => {
+    onInitIngredients();
+  }, [onInitIngredients]);
+
+  const updatePurchasable = (newIngredients) => {
     const sum = Object.keys(newIngredients)
       .map((objKey) => newIngredients[objKey])
       .reduce((aggr, el) => {
@@ -28,27 +28,26 @@ export class BurgerBuilder extends Component {
     return sum > 0;
   };
 
-  purchaseHandler = () => {
-    if (this.props.isAuthenticated) {
-      this.setState({ ordering: true });
+  const purchaseHandler = () => {
+    if (props.isAuthenticated) {
+      setIsOrdering(true);
     } else {
-      this.props.onSetAuthRedirectPath("/checkout");
-      this.props.history.push("/auth");
+      props.onSetAuthRedirectPath("/checkout");
+      props.history.push("/auth");
     }
   };
 
-  closeModalHandler = () => {
-    this.setState({ ordering: false });
+  const closeModalHandler = () => {
+    setIsOrdering(false);
   };
 
-  purchaseContinueHandler = () => {
-    this.props.onPurchaseInit();
-    this.props.history.push("/checkout");
+  const purchaseContinueHandler = () => {
+    props.onPurchaseInit();
+    props.history.push("/checkout");
   };
 
-  render() {
     const disabledInfo = {
-      ...this.props.ings,
+      ...props.ings,
     };
 
     for (let key in disabledInfo) {
@@ -56,24 +55,24 @@ export class BurgerBuilder extends Component {
     }
     let spinner = <Spinner />;
     let orderSummary = null;
-    let burger = this.props.error ? (
-      <p>Ingredients can't be loaded;</p>
+    let burger = props.error ? (
+      <p>Ingredients can't be loaded!</p>
     ) : (
       spinner
     );
 
-    if (this.props.ings) {
+    if (props.ings) {
       burger = (
         <Aux>
-          <Burger ingredients={this.props.ings} />
+          <Burger ingredients={props.ings} />
           <BuildControls
-            ingredientAdded={this.props.onIngredientAdded}
-            ingredientRemoved={this.props.onIngredientRemoved}
+            ingredientAdded={props.onIngredientAdded}
+            ingredientRemoved={props.onIngredientRemoved}
             disabled={disabledInfo}
-            price={this.props.price}
-            purchasable={this.updatePurchasable(this.props.ings)}
-            ordering={this.purchaseHandler}
-            isAuth={this.props.isAuthenticated}
+            price={props.price}
+            purchasable={updatePurchasable(props.ings)}
+            ordering={purchaseHandler}
+            isAuth={props.isAuthenticated}
           />
         </Aux>
       );
@@ -81,10 +80,10 @@ export class BurgerBuilder extends Component {
       orderSummary = (
         <Aux>
           <OrderSummary
-            ingredients={this.props.ings}
-            closeModal={this.closeModalHandler}
-            continuePurchase={this.purchaseContinueHandler}
-            total={this.props.price}
+            ingredients={props.ings}
+            closeModal={closeModalHandler}
+            continuePurchase={purchaseContinueHandler}
+            total={props.price}
           />
         </Aux>
       );
@@ -92,13 +91,12 @@ export class BurgerBuilder extends Component {
 
     return (
       <Aux>
-        <Modal show={this.state.ordering} modalClosed={this.closeModalHandler}>
+        <Modal show={isOrdering} modalClosed={closeModalHandler}>
           {orderSummary}
         </Modal>
         {burger}
       </Aux>
     );
-  }
 }
 
 const mapStateToProps = (state) => {
